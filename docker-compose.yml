@@ -1,0 +1,39 @@
+version: "3"
+services:
+  nginx:
+    image: nginx
+    volumes:
+      - ./nginx/logs:/var/log/nginx
+    ports:
+      - "80:80"
+
+  elasticsearch:
+    image: elasticsearch:7.17.12
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - http.port=9200
+      - network.host=0.0.0.0
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.17.2
+    volumes:
+      - ./nginx/logs:/var/log/nginx
+      - ./filebeat/config/filebeat.yml:/usr/share/filebeat/filebeat.yml
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: kibana:7.17.12
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_URL: "http://localhost:9200"
+    depends_on:
+      - elasticsearch
+
+volumes:
+  logs:
+    driver: local
